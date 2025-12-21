@@ -177,7 +177,11 @@ const HomePage = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+      const params = new URLSearchParams();
+      params.set("q", searchTerm);
+      if (selectedProvince) params.set("province", selectedProvince);
+      if (selectedDistrict) params.set("district", selectedDistrict);
+      navigate(`/search?${params.toString()}`);
     }
   };
   const featuredAds = featuredAdsResponse?.data || [
