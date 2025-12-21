@@ -240,8 +240,8 @@ router.get("/verify/:reference", async (req, res) => {
 
             await client.query(
               `
-              INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, is_active)
-              VALUES ($1, $2, $3, $4, $5, true)
+              INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, status)
+              VALUES ($1, $2, $3, $4, $5, 'active')
               `,
               [payment.user_id, payment.subscription_plan_id, payment.reference, startDate, endDate]
             );
@@ -386,8 +386,8 @@ router.post(
 
                     await client.query(
                       `
-                      INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, is_active)
-                      VALUES ($1, $2, $3, $4, $5, true)
+                      INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, status)
+                      VALUES ($1, $2, $3, $4, $5, 'active')
                       `,
                       [payment.user_id, payment.subscription_plan_id, payment.reference, startDate, endDate]
                     );
