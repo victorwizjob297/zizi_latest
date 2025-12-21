@@ -157,6 +157,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [recentPage, setRecentPage] = useState(1);
   const [recentLimit] = useState(12);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
   
   // Use the actual hooks, and use mock data for listings if they are loading or empty
   const { data: featuredAdsResponse, isLoading: loadingFeatured } =
@@ -217,10 +220,6 @@ const HomePage = () => {
   // Assuming the categories are in categoriesResponse.data (matching your JSON structure)
   const categories = categoriesResponse?.data || [];
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedDistrict, setSelectedDistrict] = useState("");
-
   const AdCardSkeleton = () => (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
       <div className="w-full h-48 bg-gray-200"></div>
@@ -241,21 +240,25 @@ const HomePage = () => {
           <h1 className="text-2xl font-bold text-white mb-4 text-center">
             What are you looking for?
           </h1>
-          <div className="flex max-w-4xl mx-auto rounded-lg ">
-            <select className="px-4 py-3 border-r border-gray-200 text-gray-700 bg-white focus:outline-none">
-              <option>All Zimbabwe</option>
-              <option>..</option>
-              <option>....</option>
-            </select>
+          <div className="flex max-w-4xl mx-auto rounded-lg gap-2">
+            <div className="w-full max-w-xs">
+              <LocationSelector
+                selectedProvince={selectedProvince}
+                selectedDistrict={selectedDistrict}
+                onProvinceChange={setSelectedProvince}
+                onDistrictChange={setSelectedDistrict}
+                className="space-y-0"
+              />
+            </div>
 
-            <div className="flex-1 max-w-xl  hidden md:block">
-              <form onSubmit={handleSearch} className="relative">
+            <div className="flex-1 hidden md:block">
+              <form onSubmit={handleSearch} className="relative h-full">
                 <input
                   type="text"
                   placeholder="Search for anything..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-4 pr-12 py-3 border-r border-gray-300 rounded-r-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                  className="w-full h-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
                 />
                 <button
                   type="submit"
@@ -265,17 +268,6 @@ const HomePage = () => {
                 </button>
               </form>
             </div>
-          </div>
-          
-          {/* Location Selector */}
-          <div className="max-w-4xl mx-auto mt-6 bg-white bg-opacity-10 rounded-lg p-4">
-            <LocationSelector
-              selectedProvince={selectedProvince}
-              selectedDistrict={selectedDistrict}
-              onProvinceChange={setSelectedProvince}
-              onDistrictChange={setSelectedDistrict}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            />
           </div>
         </div>
       </header>
