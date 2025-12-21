@@ -149,20 +149,6 @@ const CategoryItem = ({
   );
 };
 
-const ZIMBABWE_LOCATIONS = [
-  { name: "All Zimbabwe", value: "" },
-  { name: "Bulawayo", value: "Bulawayo" },
-  { name: "Chitungwiza", value: "Chitungwiza" },
-  { name: "Coventry", value: "Coventry" },
-  { name: "Epworth", value: "Epworth" },
-  { name: "Goromonzi", value: "Goromonzi" },
-  { name: "Harare", value: "Harare" },
-  { name: "Kuwadzana", value: "Kuwadzana" },
-  { name: "Masvingo", value: "Masvingo" },
-  { name: "Mutare", value: "Mutare" },
-  { name: "Ruwa", value: "Ruwa" },
-];
-
 /**
  * Main Home Page Component
  */
@@ -170,7 +156,6 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [recentPage, setRecentPage] = useState(1);
   const [recentLimit] = useState(12);
-  const [selectedLocation, setSelectedLocation] = useState("");
   
   // Use the actual hooks, and use mock data for listings if they are loading or empty
   const { data: featuredAdsResponse, isLoading: loadingFeatured } =
@@ -180,7 +165,6 @@ const HomePage = () => {
   const { data: recentAdsResponse, isLoading: loadingRecent } = useGetAdsQuery({
     limit: recentLimit,
     page: recentPage,
-    ...(selectedLocation && { location: selectedLocation }),
   });
   const { data: categoriesResponse, isLoading: loadingCategories } =
     useGetCategoriesQuery();
@@ -253,20 +237,10 @@ const HomePage = () => {
             What are you looking for?
           </h1>
           <div className="flex max-w-4xl mx-auto rounded-lg ">
-            <select 
-              value={selectedLocation}
-              onChange={(e) => {
-                setSelectedLocation(e.target.value);
-                setRecentPage(1);
-              }}
-              className="px-4 py-3 border-r border-gray-200 text-gray-700 bg-white focus:outline-none cursor-pointer"
-              data-testid="select-location"
-            >
-              {ZIMBABWE_LOCATIONS.map((loc) => (
-                <option key={loc.value} value={loc.value}>
-                  {loc.name}
-                </option>
-              ))}
+            <select className="px-4 py-3 border-r border-gray-200 text-gray-700 bg-white focus:outline-none">
+              <option>All Zimbabwe</option>
+              <option>..</option>
+              <option>....</option>
             </select>
 
             <div className="flex-1 max-w-xl  hidden md:block">
