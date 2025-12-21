@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGetFeaturedAdsQuery, useGetAdsQuery } from "../redux/api/adsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoriesApi";
+import Pagination from "../components/common/Pagination";
 import {
   MapPin,
   Clock,
@@ -132,13 +133,17 @@ const CategoryItem = ({
  */
 const HomePage = () => {
   const navigate = useNavigate();
+  const [recentPage, setRecentPage] = useState(1);
+  const [recentLimit] = useState(12);
+  
   // Use the actual hooks, and use mock data for listings if they are loading or empty
   const { data: featuredAdsResponse, isLoading: loadingFeatured } =
     useGetFeaturedAdsQuery({
       limit: 4,
     });
   const { data: recentAdsResponse, isLoading: loadingRecent } = useGetAdsQuery({
-    limit: 8,
+    limit: recentLimit,
+    page: recentPage,
   });
   const { data: categoriesResponse, isLoading: loadingCategories } =
     useGetCategoriesQuery();
@@ -182,40 +187,9 @@ const HomePage = () => {
       is_urgent: true,
     },
   ];
-  const recentAds = recentAdsResponse?.data?.ads || [
-    {
-      id: 5,
-      title: "Toyota Camry 2018 Clean Title",
-      price: 9500000,
-      location: "Ibadan",
-      images: [],
-      is_urgent: false,
-    },
-    {
-      id: 6,
-      title: "Modern 3-Bedroom Apartment Rental",
-      price: 2500000,
-      location: "Lekki",
-      images: [],
-      is_urgent: true,
-    },
-    {
-      id: 7,
-      title: "Professional Web Design Services",
-      price: 100000,
-      location: "Remote",
-      images: [],
-      is_urgent: false,
-    },
-    {
-      id: 8,
-      title: "Used HP Laptop for Students",
-      price: 150000,
-      location: "Benin City",
-      images: [],
-      is_urgent: false,
-    },
-  ];
+  const recentAds = recentAdsResponse?.data?.ads || [];
+  const totalRecentAds = recentAdsResponse?.data?.total || 0;
+  const totalRecentPages = Math.ceil(totalRecentAds / recentLimit) || 1;
   // Assuming the categories are in categoriesResponse.data (matching your JSON structure)
   const categories = categoriesResponse?.data || [];
 
@@ -442,11 +416,18 @@ const HomePage = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {loadingRecent
-                  ? [...Array(8)].map((_, i) => <AdCardSkeleton key={i} />)
-                  : recentAds
-                      .slice(0, 8)
-                      .map((ad) => <AdCard key={ad.id} ad={ad} />)}
+                  ? [...Array(12)].map((_, i) => <AdCardSkeleton key={i} />)
+                  : recentAds.map((ad) => <AdCard key={ad.id} ad={ad} />)}
               </div>
+              {totalRecentPages > 1 && (
+                <Pagination
+                  currentPage={recentPage}
+                  totalPages={totalRecentPages}
+                  totalItems={totalRecentAds}
+                  itemsPerPage={recentLimit}
+                  onPageChange={setRecentPage}
+                />
+              )}
             </div>
           </main>
         </div>

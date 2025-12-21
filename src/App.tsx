@@ -1,11 +1,13 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Provider } from "react-redux";
+import { Provider, useSelector, useDispatch } from "react-redux";
 import { store } from "./redux/store";
+import { closeAuthModal } from "./redux/slices/authSlice";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import NotificationToast from "./components/common/NotificationToast";
 import SearchModal from "./components/common/SearchModal";
+import LoginSignupModal from "./components/auth/LoginSignupModal";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -33,14 +35,21 @@ import SellerShop from "./pages/SellerShop";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
 
-function App() {
+function AppContent() {
+  const { authModalOpen } = useSelector((state: any) => state.auth);
+  const dispatch = useDispatch();
+
   return (
-    <Provider store={store}>
-      <Router>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-          <Header />
-          <NotificationToast />
-          <SearchModal />
+    <Router>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <NotificationToast />
+        <SearchModal />
+        <LoginSignupModal 
+          isOpen={authModalOpen} 
+          onClose={() => dispatch(closeAuthModal())} 
+          returnTo="/" 
+        />
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<Home />} />
@@ -156,6 +165,13 @@ function App() {
           <Footer />
         </div>
       </Router>
+  );
+}
+
+function App() {
+  return (
+    <Provider store={store}>
+      <AppContent />
     </Provider>
   );
 }

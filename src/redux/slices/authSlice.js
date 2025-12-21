@@ -4,6 +4,7 @@ const initialState = {
   token: localStorage.getItem("token"),
   isAuthenticated: !!localStorage.getItem("token"),
   isAdmin: JSON.parse(localStorage.getItem("user"))?.role === "admin" || false,
+  authModalOpen: false,
 };
 
 const authSlice = createSlice({
@@ -16,6 +17,7 @@ const authSlice = createSlice({
       state.token = token;
       state.isAuthenticated = true;
       state.isAdmin = user?.role === "admin";
+      state.authModalOpen = false;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
     },
@@ -31,8 +33,14 @@ const authSlice = createSlice({
       state.user = { ...state.user, ...action.payload };
       localStorage.setItem("user", JSON.stringify(state.user));
     },
+    openAuthModal: (state) => {
+      state.authModalOpen = true;
+    },
+    closeAuthModal: (state) => {
+      state.authModalOpen = false;
+    },
   },
 });
 
-export const { setCredentials, logout, updateProfile } = authSlice.actions;
+export const { setCredentials, logout, updateProfile, openAuthModal, closeAuthModal } = authSlice.actions;
 export default authSlice.reducer;

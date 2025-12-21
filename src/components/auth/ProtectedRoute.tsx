@@ -1,13 +1,19 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { openAuthModal } from '../../redux/slices/authSlice';
 
 const ProtectedRoute = ({ children }) => {
+  const dispatch = useDispatch();
   const { isAuthenticated } = useSelector(state => state.auth);
-  const location = useLocation();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      dispatch(openAuthModal());
+    }
+  }, [isAuthenticated, dispatch]);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return null;
   }
 
   return children;
