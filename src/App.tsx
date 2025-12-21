@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store } from "./redux/store";
-import { closeAuthModal } from "./redux/slices/authSlice";
+import { closeAuthModal, logout } from "./redux/slices/authSlice";
+import { isTokenExpired, getTimeUntilExpiry } from "./utils/jwt";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import NotificationToast from "./components/common/NotificationToast";
@@ -36,8 +37,41 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AdminRoute from "./components/auth/AdminRoute";
 
 function AppContent() {
-  const { authModalOpen } = useSelector((state: any) => state.auth);
+  const { authModalOpen, token, isAuthenticated } = useSelector(
+    (state: any) => state.auth
+  );
   const dispatch = useDispatch();
+
+  // Check token expiry on mount and set up periodic checks
+  useEffect(() => {
+    // Check if token is expired on mount
+    if (isAuthenticated && token && isTokenExpired(token)) {
+      dispatch(logout());
+      return;
+    }
+
+    // Set up periodic token expiry check (every 60 seconds)
+    const checkTokenExpiry = setInterval(() => {
+      if (isAuthenticated && token) {
+        if (isTokenExpired(token)) {
+          clearInterval(checkTokenExpiry);
+          dispatch(logout());
+        } else {
+          const timeRemaining = getTimeUntilExpiry(token);
+          // Warn user when token is about to expire (5 minutes before)
+          if (timeRemaining > 0 && timeRemaining <= 300) {
+            // Token will expire in less than 5 minutes
+            // You can dispatch a warning action here if needed
+            console.warn(
+              `Your session will expire in ${Math.floor(timeRemaining / 60)} minutes`
+            );
+          }
+        }
+      }
+    }, 60000); // Check every 60 seconds
+
+    return () => clearInterval(checkTokenExpiry);
+  }, [isAuthenticated, token, dispatch]);
 
   return (
     <Router>
