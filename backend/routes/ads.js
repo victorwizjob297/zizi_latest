@@ -1,5 +1,6 @@
 import express from "express";
 import Ad from "../models/Ad.js";
+import User from "../models/User.js";
 import UserSubscription from "../models/UserSubscription.js";
 import { protect, optionalAuth, checkOwnership } from "../middleware/auth.js";
 import { uploadMultiple } from "../middleware/upload.js";
@@ -11,6 +12,7 @@ import {
   validateId,
   validatePagination,
 } from "../middleware/validation.js";
+import { sendAdPostedNotificationToAdmin } from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -292,6 +294,15 @@ router.post(
 
       console.log(adData);
       const ad = await Ad.create(adData);
+
+      // Send email notification to admin
+      try {
+        const user = await User.findById(req.user.id);
+        await sendAdPostedNotificationToAdmin(ad, user);
+      } catch (emailError) {
+        console.error("Error sending admin notification:", emailError);
+        // Don't fail the request if email fails
+      }
 
       res.status(201).json({
         success: true,

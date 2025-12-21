@@ -5,6 +5,10 @@ import Category from "../models/Category.js";
 import { protect, admin } from "../middleware/auth.js";
 import { validateId, validatePagination } from "../middleware/validation.js";
 import { query } from "../config/database.js";
+import {
+  sendAdApprovedNotificationToUser,
+  sendAdRejectedNotificationToUser,
+} from "../services/emailService.js";
 
 const router = express.Router();
 
@@ -225,7 +229,7 @@ router.get("/ads", validatePagination, async (req, res) => {
 // @access  Private/Admin
 router.put("/ads/:id/status", validateId, async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, rejection_reason } = req.body;
 
     if (
       !["active", "pending", "rejected", "sold", "expired"].includes(status)
@@ -236,13 +240,43 @@ router.put("/ads/:id/status", validateId, async (req, res) => {
       });
     }
 
-    const ad = await Ad.updateStatus(req.params.id, status);
-
-    if (!ad) {
+    // Get ad and user info before updating
+    const adBefore = await Ad.findById(req.params.id);
+    if (!adBefore) {
       return res.status(404).json({
         success: false,
         message: "Ad not found",
       });
+    }
+
+    const adUser = await User.findById(adBefore.user_id);
+
+    // Update ad status
+    const ad = await Ad.updateStatus(req.params.id, status);
+
+    // Send email notifications based on status change
+    if (status === "active" && adBefore.status === "pending") {
+      // Ad approved
+      try {
+        await sendAdApprovedNotificationToUser(ad, adUser, req.user.name || "Admin");
+      } catch (emailError) {
+        console.error("Error sending approval notification:", emailError);
+      }
+    } else if (status === "rejected" && adBefore.status === "pending") {
+      // Ad rejected
+      try {
+        const reason =
+          rejection_reason ||
+          "The ad does not meet our platform standards. Please review the guidelines and resubmit.";
+        await sendAdRejectedNotificationToUser(
+          ad,
+          adUser,
+          reason,
+          req.user.name || "Admin"
+        );
+      } catch (emailError) {
+        console.error("Error sending rejection notification:", emailError);
+      }
     }
 
     res.json({
