@@ -1,0 +1,52 @@
+POST /api/payments/initialize 500 482.118 ms - 116  
+Executed query: {
+  text: 'SELECT id, name, email, role, status, created_at FROM users WHERE id = $1',
+  duration: 2214,
+  rows: 1
+}
+Database query error: error: new row for relation "payments" violates check constraint "payments_service_check"
+    at C:\Users\victor.d\Downloads\zizizip\zizizip\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async query (file:///C:/Users/victor.d/Downloads/zizizip/zizizip/backend/config/database.js:43:20)
+    at async file:///C:/Users/victor.d/Downloads/zizizip/zizizip/backend/routes/payments.js:109:27 {    
+  length: 327,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (3, 1, null, subscription, 3000, zizi_subscription_1766347789851_1, pending, null, null, 2025-12-21 20:09:51.768219).',     
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'payments',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'payments_service_check',
+  file: 'execMain.c',
+  line: '2119',
+  routine: 'ExecConstraints'
+}
+Initialize payment error: error: new row for relation "payments" violates check constraint "payments_service_check"
+    at C:\Users\victor.d\Downloads\zizizip\zizizip\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async query (file:///C:/Users/victor.d/Downloads/zizizip/zizizip/backend/config/database.js:43:20)
+    at async file:///C:/Users/victor.d/Downloads/zizizip/zizizip/backend/routes/payments.js:109:27 {    
+  length: 327,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (3, 1, null, subscription, 3000, zizi_subscription_1766347789851_1, pending, null, null, 2025-12-21 20:09:51.768219).',     
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'payments',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'payments_service_check',
+  file: 'execMain.c',
+  line: '2119',
+  routine: 'ExecConstraints'
+}

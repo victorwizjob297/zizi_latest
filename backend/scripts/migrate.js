@@ -133,14 +133,20 @@ const migrations = [
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     ad_id INTEGER REFERENCES ads(id) ON DELETE SET NULL,
-    service VARCHAR(20) NOT NULL CHECK (service IN ('bump', 'feature', 'urgent')),
+    service VARCHAR(20) NOT NULL CHECK (service IN ('bump', 'feature', 'urgent', 'subscription')),
     amount INTEGER NOT NULL, -- Amount in kobo (Paystack format)
     reference VARCHAR(100) UNIQUE NOT NULL,
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')),
     paystack_data JSONB,
+    subscription_plan_id INTEGER REFERENCES subscription_plans(id) ON DELETE SET NULL,
     verified_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`,
+
+  // Update existing payments table constraint to allow subscription
+  `ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_service_check`,
+  `ALTER TABLE payments ADD CONSTRAINT payments_service_check CHECK (service IN ('bump', 'feature', 'urgent', 'subscription'))`,
+  `ALTER TABLE payments ADD COLUMN IF NOT EXISTS subscription_plan_id INTEGER REFERENCES subscription_plans(id) ON DELETE SET NULL`,
 
   // Blocked users table
   `CREATE TABLE IF NOT EXISTS blocked_users (
