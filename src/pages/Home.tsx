@@ -3,59 +3,80 @@ import { Link, useNavigate } from "react-router-dom";
 import { useGetFeaturedAdsQuery, useGetAdsQuery } from "../redux/api/adsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoriesApi";
 import Pagination from "../components/common/Pagination";
+import { isUserLongTimeMember, getUserTenureYears } from "../utils/user";
 import {
   MapPin,
   Clock,
   ChevronRight,
   Search, // Used for the category arrow
+  Award,
 } from "lucide-react";
 
 /**
  * Ad Card Component
  * A reusable component for rendering a single ad item.
  */
-const AdCard = ({ ad }) => (
-  <Link
-    to={`/ads/${ad.id}`}
-    className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
-  >
-    <div className="relative">
-      <img
-        src={
-          ad.images?.[0]?.url ||
-          "https://via.placeholder.com/300x200?text=No+Image" // Placeholder for ad image
-        }
-        alt={ad.title}
-        className="w-full h-48 object-cover"
-      />
-      {ad.is_urgent && (
-        <div className="absolute top-3 right-3">
-          <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
-            Urgent
+const AdCard = ({ ad }) => {
+  const isLongTimeUser = isUserLongTimeMember(ad.user?.created_at);
+  const isNotFree = ad.subscription_type && ad.subscription_type !== "free";
+
+  return (
+    <Link
+      to={`/ads/${ad.id}`}
+      className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
+    >
+      <div className="relative">
+        <img
+          src={
+            ad.images?.[0]?.url ||
+            "https://via.placeholder.com/300x200?text=No+Image" // Placeholder for ad image
+          }
+          alt={ad.title}
+          className="w-full h-48 object-cover"
+        />
+        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+          {ad.is_urgent && (
+            <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+              Urgent
+            </span>
+          )}
+          {isNotFree && (
+            <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full capitalize">
+              {ad.subscription_type}
+            </span>
+          )}
+          {isLongTimeUser && (
+            <span
+              className="bg-green-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
+              title="Trusted seller - on platform for 1+ years"
+            >
+              <Award size={12} />
+              Trusted
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+          {ad.title}
+        </h3>
+        <p className="text-green-600 font-bold text-lg mb-2">
+          ₦{ad.price?.toLocaleString() || "N/A"}
+        </p>
+        <div className="flex items-center text-gray-500 text-sm mb-1">
+          <MapPin size={14} className="mr-1" />
+          <span>{ad.location || "Unknown"}</span>
+        </div>
+        <div className="flex items-center text-gray-500 text-sm">
+          <Clock size={14} className="mr-1" />
+          <span>
+            {ad.created_at ? new Date(ad.created_at).toLocaleDateString() : "N/A"}
           </span>
         </div>
-      )}
-    </div>
-    <div className="p-4">
-      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-        {ad.title}
-      </h3>
-      <p className="text-green-600 font-bold text-lg mb-2">
-        ₦{ad.price?.toLocaleString() || "N/A"}
-      </p>
-      <div className="flex items-center text-gray-500 text-sm mb-1">
-        <MapPin size={14} className="mr-1" />
-        <span>{ad.location || "Unknown"}</span>
       </div>
-      <div className="flex items-center text-gray-500 text-sm">
-        <Clock size={14} className="mr-1" />
-        <span>
-          {ad.created_at ? new Date(ad.created_at).toLocaleDateString() : "N/A"}
-        </span>
-      </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 
 /**
  * Category Item Component with Hover Submenu

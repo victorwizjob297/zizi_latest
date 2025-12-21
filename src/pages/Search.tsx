@@ -570,7 +570,12 @@ const Search = () => {
                     is_featured: boolean;
                     is_urgent: boolean;
                     created_at: string;
-                  }) => (
+                    subscription_type?: string;
+                    user?: { created_at: string };
+                  }) => {
+                    const isLongTimeUser = ad.user?.created_at ? new Date(ad.user.created_at) <= new Date(new Date().setFullYear(new Date().getFullYear() - 1)) : false;
+                    const isNotFree = ad.subscription_type && ad.subscription_type !== "free";
+                    return (
                     <Link
                       key={ad.id}
                       to={`/ads/${ad.id}`}
@@ -602,13 +607,24 @@ const Search = () => {
                             </span>
                           </div>
                         )}
-                        {ad.is_urgent && (
-                          <div className="absolute top-3 right-3">
+                        <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                          {ad.is_urgent && (
                             <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
                               Urgent
                             </span>
-                          </div>
-                        )}
+                          )}
+                          {isNotFree && (
+                            <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full capitalize">
+                              {ad.subscription_type}
+                            </span>
+                          )}
+                          {isLongTimeUser && (
+                            <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1" title="Trusted seller - on platform for 1+ years">
+                              <Star size={12} fill="currentColor" />
+                              Trusted
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="p-4 flex-1">
                         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
@@ -634,7 +650,8 @@ const Search = () => {
                         </div>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {adsData.totalPages > 1 && (
