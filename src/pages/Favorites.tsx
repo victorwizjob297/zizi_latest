@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { isUserLongTimeMember } from "../utils/user";
 import {
   Heart,
   MapPin,
@@ -9,6 +10,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Award,
 } from "lucide-react";
 import {
   useGetFavoritesQuery,
@@ -183,7 +185,11 @@ const Favorites = () => {
         ) : favorites.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.map((ad) => (
+              {favorites.map((ad) => {
+                const isLongTimeUser = isUserLongTimeMember(ad.user?.created_at);
+                const isNotFree = ad.subscription_type && ad.subscription_type !== "free";
+                
+                return (
                 <div
                   key={ad.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
@@ -199,13 +205,29 @@ const Favorites = () => {
                         className="w-full h-48 object-cover"
                       />
                     </Link>
-                    <button
-                      onClick={() => handleRemoveFromFavorites(ad.id)}
-                      className="absolute top-3 right-3 bg-white bg-opacity-90 text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
-                      title="Remove from favorites"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                      <button
+                        onClick={() => handleRemoveFromFavorites(ad.id)}
+                        className="bg-white bg-opacity-90 text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors"
+                        title="Remove from favorites"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                      {isNotFree && (
+                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full capitalize">
+                          {ad.subscription_type}
+                        </span>
+                      )}
+                      {isLongTimeUser && (
+                        <span
+                          className="bg-green-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                          title="Trusted seller - on platform for 1+ years"
+                        >
+                          <Award size={12} />
+                          Trusted
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="p-4">
                     <Link to={`/ads/${ad.id}`}>
@@ -234,7 +256,8 @@ const Favorites = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             {renderPagination()}
           </>
