@@ -31,6 +31,7 @@ import { useGetSubscriptionPlansQuery, useGetCurrentSubscriptionQuery } from '..
 import { useUpdateAvatarMutation } from '../redux/api/usersApi';
 import { updateProfile } from '../redux/slices/authSlice';
 import { addNotification } from '../redux/slices/uiSlice';
+import SubscriptionPaymentModal from '../components/common/SubscriptionPaymentModal';
 
 const Settings = () => {
   const dispatch = useDispatch();
@@ -40,6 +41,8 @@ const Settings = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [screenshotWarning, setScreenshotWarning] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
   const fileInputRef = useRef(null);
 
   const [profileData, setProfileData] = useState({
@@ -625,26 +628,57 @@ const Settings = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {subscriptionPlans?.data?.map((plan) => (
-                      <div key={plan.id} className="border border-gray-200 rounded-lg p-6">
+                      <div key={plan.id} className={`border-2 rounded-lg p-6 transition-colors ${
+                        currentSubscription?.data?.subscription_plan_id === plan.id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-green-500'
+                      }`}>
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">{plan.name}</h3>
-                        <p className="text-3xl font-bold text-green-600 mb-4">${plan.price}<span className="text-sm text-gray-600">/month</span></p>
+                        <p className="text-3xl font-bold text-green-600 mb-4">₦{parseFloat(plan.price).toLocaleString()}<span className="text-sm text-gray-600">/{plan.duration}</span></p>
+                        <p className="text-gray-600 mb-4">{plan.description}</p>
                         <ul className="space-y-2 mb-6">
-                          <li className="text-sm text-gray-600">✓ {plan.features}</li>
+                          {plan.features && plan.features.length > 0 ? (
+                            plan.features.map((feature, index) => (
+                              <li key={index} className="text-sm text-gray-600 flex items-start">
+                                <span className="text-green-600 mr-2">✓</span>
+                                {feature}
+                              </li>
+                            ))
+                          ) : (
+                            <li className="text-sm text-gray-600 flex items-start">
+                              <span className="text-green-600 mr-2">✓</span>
+                              {plan.ad_limit === -1 ? 'Unlimited ads' : `Post up to ${plan.ad_limit} ads`}
+                            </li>
+                          )}
                         </ul>
-                        <button className={`w-full py-2 px-4 rounded-lg ${
-                          currentSubscription?.data?.subscription_plan_id === plan.id
-                            ? 'bg-gray-400 text-white cursor-not-allowed'
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
-                        disabled={currentSubscription?.data?.subscription_plan_id === plan.id}
+                        <button 
+                          onClick={() => {
+                            setSelectedPlanForPayment(plan);
+                            setShowPaymentModal(true);
+                          }}
+                          disabled={currentSubscription?.data?.subscription_plan_id === plan.id}
+                          className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                            currentSubscription?.data?.subscription_plan_id === plan.id
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : 'bg-green-600 text-white hover:bg-green-700'
+                          }`}
                         >
-                          {currentSubscription?.data?.subscription_plan_id === plan.id ? 'Current Plan' : 'Upgrade'}
+                          {currentSubscription?.data?.subscription_plan_id === plan.id ? 'Current Plan' : 'Subscribe Now'}
                         </button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              <SubscriptionPaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => {
+                  setShowPaymentModal(false);
+                  setSelectedPlanForPayment(null);
+                }}
+                plan={selectedPlanForPayment}
+              />
             </div>
           </div>
         </div>

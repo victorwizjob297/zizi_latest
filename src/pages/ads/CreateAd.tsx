@@ -27,6 +27,7 @@ import {
 import { addNotification } from "../../redux/slices/uiSlice";
 import LocationSelector from "../../components/common/LocationSelector";
 import DynamicFormBuilder from "../../components/common/DynamicFormBuilder";
+import SubscriptionPaymentModal from "../../components/common/SubscriptionPaymentModal";
 
 const CreateAd = () => {
   const navigate = useNavigate();
@@ -787,102 +788,11 @@ const CreateAd = () => {
           )}
         </form>
 
-        {/* Subscription Plans Modal */}
-        {showSubscriptionModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Subscription Plans
-                  </h2>
-                  <button
-                    onClick={() => setShowSubscriptionModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-
-                <p className="text-gray-600 mb-6">
-                  Choose a plan to unlock premium features and boost your ad
-                  visibility
-                </p>
-
-                {subscriptionPlans?.data &&
-                subscriptionPlans.data.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {subscriptionPlans.data.map((plan) => (
-                      <div
-                        key={plan.id}
-                        className="border-2 border-gray-200 rounded-lg p-6 hover:border-green-500 transition-colors"
-                      >
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {plan.name}
-                        </h3>
-                        <div className="text-3xl font-bold text-green-600 mb-4">
-                          ${plan.price}
-                          <span className="text-sm text-gray-600 font-normal">
-                            /{plan.duration}
-                          </span>
-                        </div>
-                        <p className="text-gray-600 mb-4">{plan.description}</p>
-                        <ul className="space-y-2 mb-6">
-                          {plan.features && plan.features.length > 0 ? (
-                            plan.features.map((feature, index) => (
-                              <li key={index} className="flex items-start">
-                                <CheckCircle
-                                  className="text-green-600 mr-2 mt-0.5 flex-shrink-0"
-                                  size={16}
-                                />
-                                <span className="text-sm text-gray-700">
-                                  {feature}
-                                </span>
-                              </li>
-                            ))
-                          ) : (
-                            <li className="flex items-start">
-                              <CheckCircle
-                                className="text-green-600 mr-2 mt-0.5 flex-shrink-0"
-                                size={16}
-                              />
-                              <span className="text-sm text-gray-700">
-                                {plan.ad_limit === -1
-                                  ? "Unlimited ads"
-                                  : `Post up to ${plan.ad_limit} ads`}
-                              </span>
-                            </li>
-                          )}
-                        </ul>
-                        <button
-                          onClick={() => {
-                            navigate("/settings?tab=subscription");
-                          }}
-                          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          Choose Plan
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-600 py-8">
-                    No subscription plans available at the moment.
-                  </p>
-                )}
-
-                <div className="mt-6 text-center">
-                  <button
-                    onClick={() => setShowSubscriptionModal(false)}
-                    className="text-gray-600 hover:text-gray-800 underline"
-                  >
-                    Continue without subscription
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <SubscriptionPaymentModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          plans={subscriptionPlans?.data || []}
+        />
       </div>
     </div>
   );
