@@ -71,7 +71,9 @@ const AdCard = ({ ad }) => {
         <div className="flex items-center text-gray-500 text-sm">
           <Clock size={14} className="mr-1" />
           <span>
-            {ad.created_at ? new Date(ad.created_at).toLocaleDateString() : "N/A"}
+            {ad.created_at
+              ? new Date(ad.created_at).toLocaleDateString()
+              : "N/A"}
           </span>
         </div>
       </div>
@@ -160,7 +162,7 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProvince, setSelectedProvince] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
-  
+
   // Use the actual hooks, and use mock data for listings if they are loading or empty
   const { data: featuredAdsResponse, isLoading: loadingFeatured } =
     useGetFeaturedAdsQuery({
@@ -240,38 +242,42 @@ const HomePage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Search Header Section */}
       <header className="bg-green-700 py-12 rounded-b-[50px]">
-        <div className=" mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-2xl font-bold text-white mb-4 text-center">
             What are you looking for?
           </h1>
-          <div className="flex max-w-4xl mx-auto rounded-lg gap-2">
-            <div className="w-full max-w-xs">
+
+          <div className="max-w-4xl mx-auto">
+            {/* Location Selector with inline layout for HomePage */}
+            <div className="mb-4 bg-white p-4 rounded-lg shadow-md">
               <LocationSelector
                 selectedProvince={selectedProvince}
                 selectedDistrict={selectedDistrict}
                 onProvinceChange={setSelectedProvince}
                 onDistrictChange={setSelectedDistrict}
-                className="space-y-0"
+                layout="inline"
+                showLabels={true}
+                compact={false}
+                className="mb-0"
               />
             </div>
 
-            <div className="flex-1 hidden md:block">
-              <form onSubmit={handleSearch} className="relative h-full">
-                <input
-                  type="text"
-                  placeholder="Search for anything..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors"
-                >
-                  <Search size={20} />
-                </button>
-              </form>
-            </div>
+            {/* Search Input */}
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                placeholder="Search for anything..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors"
+              >
+                <Search size={20} />
+              </button>
+            </form>
           </div>
         </div>
       </header>

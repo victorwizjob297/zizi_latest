@@ -34,34 +34,43 @@ const NotificationToast = () => {
   };
 
   useEffect(() => {
-    notifications.forEach((notification) => {
-      const timer = setTimeout(() => {
+    const timers = notifications.map((notification) => {
+      return setTimeout(() => {
         dispatch(removeNotification(notification.id));
       }, 5000);
-
-      return () => clearTimeout(timer);
     });
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
   }, [notifications, dispatch]);
 
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-full">
       {notifications.map((notification) => (
         <div
           key={notification.id}
-          className={`max-w-sm w-full border rounded-lg shadow-lg p-4 ${getBackgroundColor(
-            notification.type
+          className={`max-w-md w-full border rounded-lg shadow-lg p-4 ${getBackgroundColor(
+            notification.type,
           )} animate-slide-in`}
         >
-          <div className="flex items-start">
-            <div className="flex-shrink-0">{getIcon(notification.type)}</div>
-            <div className="ml-3 w-0 flex-1">
-              <p className="text-sm font-medium text-gray-900">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              {getIcon(notification.type)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap">
                 {notification.message}
               </p>
+              {notification.description && (
+                <p className="mt-1 text-sm text-gray-600 break-words whitespace-pre-wrap">
+                  {notification.description}
+                </p>
+              )}
             </div>
-            <div className="ml-4 flex-shrink-0 flex">
+            <div className="flex-shrink-0">
               <button
                 onClick={() => dispatch(removeNotification(notification.id))}
                 className="inline-flex text-gray-400 hover:text-gray-600 focus:outline-none"
