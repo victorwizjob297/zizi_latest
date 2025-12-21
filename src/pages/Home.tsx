@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useGetFeaturedAdsQuery, useGetAdsQuery } from "../redux/api/adsApi";
 import { useGetCategoriesQuery } from "../redux/api/categoriesApi";
 import Pagination from "../components/common/Pagination";
+import LocationSelector from "../components/common/LocationSelector";
 import { isUserLongTimeMember, getUserTenureYears } from "../utils/user";
 import {
   MapPin,
@@ -165,6 +166,8 @@ const HomePage = () => {
   const { data: recentAdsResponse, isLoading: loadingRecent } = useGetAdsQuery({
     limit: recentLimit,
     page: recentPage,
+    province: selectedProvince,
+    district: selectedDistrict,
   });
   const { data: categoriesResponse, isLoading: loadingCategories } =
     useGetCategoriesQuery();
@@ -215,6 +218,8 @@ const HomePage = () => {
   const categories = categoriesResponse?.data || [];
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
 
   const AdCardSkeleton = () => (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
@@ -260,6 +265,17 @@ const HomePage = () => {
                 </button>
               </form>
             </div>
+          </div>
+          
+          {/* Location Selector */}
+          <div className="max-w-4xl mx-auto mt-6 bg-white bg-opacity-10 rounded-lg p-4">
+            <LocationSelector
+              selectedProvince={selectedProvince}
+              selectedDistrict={selectedDistrict}
+              onProvinceChange={setSelectedProvince}
+              onDistrictChange={setSelectedDistrict}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            />
           </div>
         </div>
       </header>
