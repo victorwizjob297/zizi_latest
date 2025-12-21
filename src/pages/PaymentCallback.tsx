@@ -29,9 +29,14 @@ const PaymentCallback = () => {
     if (verificationResult) {
       if (verificationResult.success) {
         setStatus('success');
+        const isSubscription = verificationResult.data?.service === 'subscription';
+        const message = isSubscription 
+          ? 'Payment successful! Your subscription is now active.'
+          : 'Payment successful! Your ad has been promoted.';
+        
         dispatch(addNotification({
           type: 'success',
-          message: 'Payment successful! Your ad has been promoted.'
+          message
         }));
         
         // Redirect to ad or dashboard after 3 seconds

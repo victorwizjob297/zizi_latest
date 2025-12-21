@@ -28,7 +28,7 @@ const SubscriptionPaymentModal = ({ isOpen, onClose, plan, plans = [] }) => {
 
     try {
       const result = await initializePayment({
-        amount: parseFloat(planToPayFor.price) * 100,
+        amount: parseFloat(planToPayFor.price),
         subscription_plan_id: planToPayFor.id,
         callback_url: `${window.location.origin}/payment/callback`,
       }).unwrap();

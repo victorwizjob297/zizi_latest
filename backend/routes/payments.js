@@ -49,39 +49,61 @@ const paystackRequest = async (endpoint, method = "GET", data = null) => {
 // @desc    Initialize payment
 // @route   POST /api/payments/initialize
 // @access  Private
-router.post("/initialize", validatePayment, async (req, res) => {
+router.post("/initialize", async (req, res) => {
   try {
-    const { amount, service, ad_id, callback_url } = req.body;
+    const { amount, service, ad_id, subscription_plan_id, callback_url } = req.body;
 
-    // Validate service and amount
-    if (!SERVICE_PRICES[service]) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid service type",
-      });
-    }
+    let paymentService = service;
+    let paymentAmount = amount;
+    let paymentReference;
 
-    const expectedAmount = SERVICE_PRICES[service];
-    if (amount !== expectedAmount) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid amount for service",
-      });
-    }
-
-    // If ad_id is provided, verify ownership
-    if (ad_id) {
-      const ad = await Ad.findById(ad_id);
-      if (!ad || ad.user_id !== req.user.id) {
-        return res.status(404).json({
+    // Handle subscription payments
+    if (subscription_plan_id) {
+      if (!amount) {
+        return res.status(400).json({
           success: false,
-          message: "Ad not found or not owned by user",
+          message: "Amount is required for subscription payment",
         });
       }
+      paymentService = "subscription";
+      paymentAmount = Math.round(parseFloat(amount)); // Amount should be in naira, Paystack needs kobo
+    } 
+    // Handle ad service payments
+    else if (service) {
+      if (!SERVICE_PRICES[service]) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid service type",
+        });
+      }
+
+      const expectedAmount = SERVICE_PRICES[service];
+      if (amount !== expectedAmount) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid amount for service",
+        });
+      }
+
+      // If ad_id is provided, verify ownership
+      if (ad_id) {
+        const ad = await Ad.findById(ad_id);
+        if (!ad || ad.user_id !== req.user.id) {
+          return res.status(404).json({
+            success: false,
+            message: "Ad not found or not owned by user",
+          });
+        }
+      }
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Either service or subscription_plan_id is required",
+      });
     }
 
     // Generate reference
-    const reference = `zizi_${service}_${Date.now()}_${req.user.id}`;
+    paymentReference = `zizi_${paymentService}_${Date.now()}_${req.user.id}`;
 
     // Create payment record
     const paymentResult = await query(
@@ -91,22 +113,36 @@ router.post("/initialize", validatePayment, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, 'pending')
       RETURNING *
     `,
-      [req.user.id, ad_id, service, amount, reference]
+      [req.user.id, ad_id, paymentService, paymentAmount, paymentReference]
     );
+    
+    // Update payment with subscription_plan_id if provided (handle legacy schema)
+    if (subscription_plan_id && paymentResult.rows[0]) {
+      try {
+        await query(
+          `UPDATE payments SET subscription_plan_id = $1 WHERE id = $2`,
+          [subscription_plan_id, paymentResult.rows[0].id]
+        );
+      } catch (err) {
+        // Column may not exist in older schema, continue anyway
+        console.warn("subscription_plan_id column not found in payments table");
+      }
+    }
 
     const payment = paymentResult.rows[0];
 
     // Initialize payment with Paystack
     const paystackData = {
       email: req.user.email,
-      amount: amount,
-      reference: reference,
+      amount: paymentAmount * 100, // Convert to kobo
+      reference: paymentReference,
       callback_url:
         callback_url || `${process.env.CLIENT_URL}/payment/callback`,
       metadata: {
         user_id: req.user.id,
-        service: service,
+        service: paymentService,
         ad_id: ad_id,
+        subscription_plan_id: subscription_plan_id,
         payment_id: payment.id,
       },
     };
@@ -121,7 +157,7 @@ router.post("/initialize", validatePayment, async (req, res) => {
       success: true,
       data: {
         payment_id: payment.id,
-        reference: reference,
+        reference: paymentReference,
         authorization_url: paystackResponse.data.authorization_url,
         access_code: paystackResponse.data.access_code,
       },
@@ -183,6 +219,34 @@ router.get("/verify/:reference", async (req, res) => {
         `,
           [JSON.stringify(paystackResponse.data), payment.id]
         );
+
+        // Handle subscription activation
+        if (payment.subscription_plan_id) {
+          const planResult = await client.query(
+            `SELECT * FROM subscription_plans WHERE id = $1`,
+            [payment.subscription_plan_id]
+          );
+
+          if (planResult.rows.length > 0) {
+            const plan = planResult.rows[0];
+            const startDate = new Date();
+            const endDate = new Date();
+            
+            if (plan.duration === 'month') {
+              endDate.setMonth(endDate.getMonth() + 1);
+            } else if (plan.duration === 'year') {
+              endDate.setFullYear(endDate.getFullYear() + 1);
+            }
+
+            await client.query(
+              `
+              INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, is_active)
+              VALUES ($1, $2, $3, $4, $5, true)
+              `,
+              [payment.user_id, payment.subscription_plan_id, payment.reference, startDate, endDate]
+            );
+          }
+        }
 
         // Apply service to ad if applicable
         if (payment.ad_id) {
@@ -301,6 +365,34 @@ router.post(
               `,
                   [JSON.stringify(event.data), payment.id]
                 );
+
+                // Handle subscription activation
+                if (payment.subscription_plan_id) {
+                  const planResult = await client.query(
+                    `SELECT * FROM subscription_plans WHERE id = $1`,
+                    [payment.subscription_plan_id]
+                  );
+
+                  if (planResult.rows.length > 0) {
+                    const plan = planResult.rows[0];
+                    const startDate = new Date();
+                    const endDate = new Date();
+                    
+                    if (plan.duration === 'month') {
+                      endDate.setMonth(endDate.getMonth() + 1);
+                    } else if (plan.duration === 'year') {
+                      endDate.setFullYear(endDate.getFullYear() + 1);
+                    }
+
+                    await client.query(
+                      `
+                      INSERT INTO user_subscriptions (user_id, plan_id, payment_reference, start_date, end_date, is_active)
+                      VALUES ($1, $2, $3, $4, $5, true)
+                      `,
+                      [payment.user_id, payment.subscription_plan_id, payment.reference, startDate, endDate]
+                    );
+                  }
+                }
 
                 // Apply service to ad if applicable
                 if (payment.ad_id) {
