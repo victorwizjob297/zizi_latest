@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   User, 
@@ -21,12 +21,14 @@ import {
   Globe,
   Facebook,
   Instagram,
-  Twitter
+  Twitter,
+  AlertTriangle
 } from 'lucide-react';
 import { useUpdateProfileMutation } from '../redux/api/authApi';
 import { useGetUserSettingsQuery, useUpdateUserSettingsMutation } from '../redux/api/settingsApi';
 import { useGetMyBusinessProfileQuery, useUpdateBusinessProfileMutation } from '../redux/api/businessApi';
 import { useGetSubscriptionPlansQuery, useGetCurrentSubscriptionQuery } from '../redux/api/subscriptionsApi';
+import { useUpdateAvatarMutation } from '../redux/api/usersApi';
 import { updateProfile } from '../redux/slices/authSlice';
 import { addNotification } from '../redux/slices/uiSlice';
 
@@ -36,6 +38,9 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [screenshotWarning, setScreenshotWarning] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -82,6 +87,7 @@ const Settings = () => {
   });
 
   const [updateProfileMutation, { isLoading: updatingProfile }] = useUpdateProfileMutation();
+  const [updateAvatarMutation] = useUpdateAvatarMutation();
   const { data: userSettings } = useGetUserSettingsQuery();
   const [updateUserSettings] = useUpdateUserSettingsMutation();
   const { data: businessProfile } = useGetMyBusinessProfileQuery();
@@ -133,6 +139,46 @@ const Settings = () => {
         type: 'error',
         message: error.data?.message || 'Failed to update profile'
       }));
+    }
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await updateAvatarMutation(formData).unwrap();
+      
+      // Check if screenshot warning is needed
+      if (response.isScreenshot) {
+        setScreenshotWarning(true);
+        dispatch(addNotification({
+          type: 'warning',
+          message: 'This image appears to be a screenshot. Your ad might be rejected. Consider using an actual photo.'
+        }));
+      }
+
+      dispatch(updateProfile({ ...user, avatar_url: response.data.avatar_url }));
+      dispatch(addNotification({
+        type: 'success',
+        message: 'Profile picture updated successfully!'
+      }));
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      dispatch(addNotification({
+        type: 'error',
+        message: error.data?.message || 'Failed to update profile picture'
+      }));
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -270,11 +316,32 @@ const Settings = () => {
                       )}
                     </div>
                     <div>
-                      <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingAvatar}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
                         <Camera size={16} />
-                        <span>Change Photo</span>
+                        <span>{uploadingAvatar ? 'Uploading...' : 'Change Photo'}</span>
                       </button>
-                      <p className="text-sm text-gray-500 mt-1">JPG, PNG or GIF. Max size 2MB.</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">JPG, PNG, GIF or WebP. Max size 5MB.</p>
+                      
+                      {screenshotWarning && (
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start space-x-2">
+                          <AlertTriangle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-yellow-800">Screenshot Detected</p>
+                            <p className="text-sm text-yellow-700">This appears to be a screenshot. Your ad might be rejected. Consider using an actual photo instead.</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -539,114 +606,12 @@ const Settings = () => {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Business Hours
-                      </label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(businessData.business_hours).map(([day, hours]) => (
-                          <div key={day}>
-                            <label className="block text-sm text-gray-600 mb-1 capitalize">{day}</label>
-                            <input
-                              type="text"
-                              value={hours}
-                              onChange={(e) => setBusinessData(prev => ({
-                                ...prev,
-                                business_hours: { ...prev.business_hours, [day]: e.target.value }
-                              }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="e.g., 9:00 AM - 6:00 PM"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Delivery Options
-                      </label>
-                      <div className="space-y-2">
-                        {['pickup', 'delivery', 'shipping'].map(option => (
-                          <label key={option} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={businessData.delivery_options.includes(option)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setBusinessData(prev => ({
-                                    ...prev,
-                                    delivery_options: [...prev.delivery_options, option]
-                                  }));
-                                } else {
-                                  setBusinessData(prev => ({
-                                    ...prev,
-                                    delivery_options: prev.delivery_options.filter(o => o !== option)
-                                  }));
-                                }
-                              }}
-                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <span className="ml-2 text-sm text-gray-900 capitalize">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-4">
-                        Social Media Links
-                      </label>
-                      <div className="space-y-4">
-                        <div className="relative">
-                          <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="url"
-                            value={businessData.social_links.facebook}
-                            onChange={(e) => setBusinessData(prev => ({
-                              ...prev,
-                              social_links: { ...prev.social_links, facebook: e.target.value }
-                            }))}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Facebook page URL"
-                          />
-                        </div>
-                        <div className="relative">
-                          <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="url"
-                            value={businessData.social_links.instagram}
-                            onChange={(e) => setBusinessData(prev => ({
-                              ...prev,
-                              social_links: { ...prev.social_links, instagram: e.target.value }
-                            }))}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Instagram profile URL"
-                          />
-                        </div>
-                        <div className="relative">
-                          <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                          <input
-                            type="url"
-                            value={businessData.social_links.twitter}
-                            onChange={(e) => setBusinessData(prev => ({
-                              ...prev,
-                              social_links: { ...prev.social_links, twitter: e.target.value }
-                            }))}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Twitter profile URL"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
                     <div className="flex justify-end">
                       <button
                         type="submit"
-                        className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                        className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
                       >
-                        <Save size={16} />
-                        <span>Save Business Profile</span>
+                        Save Business Profile
                       </button>
                     </div>
                   </form>
@@ -656,68 +621,28 @@ const Settings = () => {
               {/* Subscription Tab */}
               {activeTab === 'subscription' && (
                 <div className="p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-6">Subscription & Billing</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-6">Subscription Plans</h2>
                   
-                  {currentSubscription?.data ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                      <h3 className="font-medium text-green-900 mb-2">
-                        Current Plan: {currentSubscription.data.plan_name}
-                      </h3>
-                      <p className="text-green-800 text-sm">
-                        Active until {new Date(currentSubscription.data.end_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <h3 className="font-medium text-blue-900 mb-2">Current Plan: Free</h3>
-                      <p className="text-blue-800 text-sm">
-                        You're currently on the free plan. Upgrade to unlock premium features.
-                      </p>
-                    </div>
-                  )}
-
-                  {subscriptionPlans?.data && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {subscriptionPlans.data.map((plan, index) => {
-                        const isCurrentPlan = currentSubscription?.data?.plan_id === plan.id;
-                        const isPopular = index === 1; // Make middle plan popular
-                        
-                        return (
-                          <div key={plan.id} className={`border rounded-lg p-6 relative ${
-                            isPopular ? 'border-2 border-green-500' : 'border border-gray-200'
-                          }`}>
-                            {isPopular && (
-                              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                                  Popular
-                                </span>
-                              </div>
-                            )}
-                            <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
-                            <p className="text-3xl font-bold text-gray-900 mb-4">
-                              ₦{plan.price.toLocaleString()}
-                              <span className="text-sm font-normal">/{plan.duration}</span>
-                            </p>
-                            <ul className="space-y-2 text-sm text-gray-600 mb-6">
-                              {plan.features.map((feature, i) => (
-                                <li key={i}>• {feature}</li>
-                              ))}
-                            </ul>
-                            <button 
-                              className={`w-full py-2 rounded-lg transition-colors ${
-                                isCurrentPlan
-                                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                                  : 'bg-green-600 text-white hover:bg-green-700'
-                              }`}
-                              disabled={isCurrentPlan}
-                            >
-                              {isCurrentPlan ? 'Current Plan' : 'Upgrade Now'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {subscriptionPlans?.data?.map((plan) => (
+                      <div key={plan.id} className="border border-gray-200 rounded-lg p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{plan.name}</h3>
+                        <p className="text-3xl font-bold text-green-600 mb-4">${plan.price}<span className="text-sm text-gray-600">/month</span></p>
+                        <ul className="space-y-2 mb-6">
+                          <li className="text-sm text-gray-600">✓ {plan.features}</li>
+                        </ul>
+                        <button className={`w-full py-2 px-4 rounded-lg ${
+                          currentSubscription?.data?.subscription_plan_id === plan.id
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                        }`}
+                        disabled={currentSubscription?.data?.subscription_plan_id === plan.id}
+                        >
+                          {currentSubscription?.data?.subscription_plan_id === plan.id ? 'Current Plan' : 'Upgrade'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

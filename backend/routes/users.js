@@ -34,6 +34,7 @@ router.put("/avatar", protect, uploadSingle("avatar"), async (req, res) => {
       data: {
         avatar_url: uploadResult.url,
       },
+      isScreenshot: req.file.isScreenshot || false,
       message: "Avatar updated successfully",
     });
   } catch (error) {

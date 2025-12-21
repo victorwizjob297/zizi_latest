@@ -31,8 +31,20 @@ export const usersApi = createApi({
     getUserStats: builder.query({
       query: (userId) => `/${userId}/stats`,
     }),
+    updateAvatar: builder.mutation({
+      query: (formData) => ({
+        url: "/avatar",
+        method: "PUT",
+        body: formData,
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
-export const { useGetUserQuery, useGetUserAdsQuery, useGetUserStatsQuery } =
-  usersApi;
+export const { 
+  useGetUserQuery, 
+  useGetUserAdsQuery, 
+  useGetUserStatsQuery,
+  useUpdateAvatarMutation 
+} = usersApi;

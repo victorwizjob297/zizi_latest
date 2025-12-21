@@ -1,12 +1,61 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import sharp from 'sharp';
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = 'uploads';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Screenshot detection function
+const isScreenshot = (metadata) => {
+  // Check for common screenshot indicators
+  // Screenshots often have exact pixel dimensions like 1920x1080, 2560x1440, etc.
+  // or common phone sizes like 1125x2436 (iPhone X), 1080x1920 (Android)
+  const commonScreenshotDimensions = [
+    [1920, 1080], [2560, 1440], [3840, 2160], // Desktop
+    [1366, 768], [1440, 900], [1600, 900],     // Laptop
+    [1125, 2436], [1080, 1920], [2340, 1080], // Phone
+  ];
+  
+  const width = metadata.width;
+  const height = metadata.height;
+  
+  // Check if dimensions match common screenshot sizes
+  const isCommonSize = commonScreenshotDimensions.some(
+    ([w, h]) => (width === w && height === h) || (width === h && height === w)
+  );
+  
+  // Check for exact pixel dimensions (common in screenshots)
+  const isExactRatio = (width % 10 === 0 && height % 10 === 0);
+  
+  return isCommonSize || (isExactRatio && (width > 800 && height > 600));
+};
+
+// Convert image to WebP
+const convertToWebP = async (inputPath, outputPath) => {
+  try {
+    const metadata = await sharp(inputPath).metadata();
+    const isScreenshotImage = isScreenshot(metadata);
+    
+    await sharp(inputPath)
+      .webp({ quality: 80 })
+      .toFile(outputPath);
+    
+    // Delete original file
+    fs.unlinkSync(inputPath);
+    
+    return {
+      path: outputPath,
+      isScreenshot: isScreenshotImage,
+      originalPath: inputPath
+    };
+  } catch (error) {
+    throw new Error(`WebP conversion failed: ${error.message}`);
+  }
+};
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -52,7 +101,7 @@ export const uploadSingle = (fieldName) => {
   return (req, res, next) => {
     const uploadMiddleware = upload.single(fieldName);
     
-    uploadMiddleware(req, res, (err) => {
+    uploadMiddleware(req, res, async (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({
@@ -76,6 +125,27 @@ export const uploadSingle = (fieldName) => {
           message: err.message
         });
       }
+      
+      // Convert to WebP and detect screenshot
+      if (req.file) {
+        try {
+          const webpPath = req.file.path.replace(/\.[^.]+$/, '.webp');
+          const conversionResult = await convertToWebP(req.file.path, webpPath);
+          
+          req.file.path = conversionResult.path;
+          req.file.filename = path.basename(conversionResult.path);
+          req.file.isScreenshot = conversionResult.isScreenshot;
+          req.file.originalname = path.basename(conversionResult.path);
+          req.file.mimetype = 'image/webp';
+        } catch (conversionError) {
+          console.error('WebP conversion error:', conversionError);
+          return res.status(400).json({
+            success: false,
+            message: conversionError.message
+          });
+        }
+      }
+      
       next();
     });
   };
