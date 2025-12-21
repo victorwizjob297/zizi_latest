@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { openAuthModal } from "../../redux/slices/authSlice";
 import {
   MapPin,
   Clock,
@@ -29,6 +30,7 @@ import AdReviews from "../../components/ads/AdReviews";
 const AdDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showContactInfo, setShowContactInfo] = useState(false);
@@ -44,7 +46,7 @@ const AdDetail = () => {
 
   const handleContactSeller = async () => {
     if (!isAuthenticated) {
-      navigate("/login");
+      dispatch(openAuthModal());
       return;
     }
 
@@ -86,7 +88,7 @@ const AdDetail = () => {
   };
   const handleFavourite = async () => {
     if (!isAuthenticated) {
-      navigate("/login");
+      dispatch(openAuthModal());
       return;
     }
 
@@ -104,7 +106,7 @@ const AdDetail = () => {
   const handleUnFavourite = async () => {
     console.log("ununununu");
     if (!isAuthenticated) {
-      navigate("/login");
+      dispatch(openAuthModal());
       return;
     }
 
