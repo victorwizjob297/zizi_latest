@@ -126,7 +126,7 @@ const CategoryItem = ({
       </Link>
 
       {hasSubcategories && (
-        <div className="absolute left-full top-0 ml-1 w-64 bg-white border border-gray-200 shadow-xl z-50 invisible group-hover:visible transition-opacity duration-150">
+        <div className="absolute left-full top-0 ml-1 w-64 bg-white border border-gray-200 shadow-xl z-20 invisible group-hover:visible transition-opacity duration-150">
           <div className="p-2">
             <h4 className="px-2 py-1 text-sm font-semibold text-gray-900">
               {category.name} Subcategories
@@ -286,11 +286,14 @@ const HomePage = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex">
           {/* Categories Sidebar (Left Column) */}
-          <aside className="w-full max-w-xs pr-6 hidden lg:block">
+          {/* Categories Sidebar (Left Column) */}
+          <aside className="w-full max-w-xs pr-6 hidden lg:block relative z-30">
+            {/* Added 'relative z-30' here */}
             <div className="bg-white rounded-lg shadow-md border border-gray-200 sticky top-4">
               <h2 className="px-4 py-3 text-lg font-bold text-gray-900 border-b border-gray-100">
                 All Categories
               </h2>
+              {/* ... rest of your sidebar code ... */}
               {loadingCategories ? (
                 <div className="p-4 space-y-3">
                   {[...Array(8)].map((_, i) => (
@@ -328,7 +331,7 @@ const HomePage = () => {
               {/* Apply for Job Card */}
               <Link
                 to="/apply"
-                className="relative flex flex-col items-start justify-end p-6 h-36 bg-[#ECF9EE] border border-[#D1EAD7] rounded-2xl hover:shadow-md transition-all group"
+                className="relative z-10 flex flex-col items-start justify-end p-6 h-36 bg-[#ECF9EE] border border-[#D1EAD7] rounded-2xl hover:shadow-md transition-all group"
               >
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-28 h-28 flex items-center justify-center transition-transform group-hover:scale-105">
                   <img

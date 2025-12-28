@@ -63,7 +63,9 @@ function AppContent() {
             // Token will expire in less than 5 minutes
             // You can dispatch a warning action here if needed
             console.warn(
-              `Your session will expire in ${Math.floor(timeRemaining / 60)} minutes`
+              `Your session will expire in ${Math.floor(
+                timeRemaining / 60
+              )} minutes`
             );
           }
         }
@@ -79,92 +81,92 @@ function AppContent() {
         <Header />
         <NotificationToast />
         <SearchModal />
-        <LoginSignupModal 
-          isOpen={authModalOpen} 
-          onClose={() => dispatch(closeAuthModal())} 
-          returnTo="/" 
+        <LoginSignupModal
+          isOpen={authModalOpen}
+          onClose={() => dispatch(closeAuthModal())}
+          returnTo="/"
         />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/ads/:id" element={<AdDetail />} />
-              <Route
-                path="/ads/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <EditAd />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/profile/:id" element={<Profile />} />
-              <Route path="/seller/:userId" element={<SellerShop />} />
-              <Route path="/payment/callback" element={<PaymentCallback />} />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/ads/:id" element={<AdDetail />} />
+            <Route
+              path="/ads/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EditAd />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/seller/:userId" element={<SellerShop />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
 
-              {/* Protected Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/saved-searches"
-                element={
-                  <ProtectedRoute>
-                    <SavedSearches />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/favorites"
-                element={
-                  <ProtectedRoute>
-                    <Favorites />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reviews"
-                element={
-                  <ProtectedRoute>
-                    <Reviews />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/create-ad"
-                element={
-                  <ProtectedRoute>
-                    <CreateAd />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ProtectedRoute>
-                    <Chat />
-                  </ProtectedRoute>
-                }
-              />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/saved-searches"
+              element={
+                <ProtectedRoute>
+                  <SavedSearches />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/favorites"
+              element={
+                <ProtectedRoute>
+                  <Favorites />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reviews"
+              element={
+                <ProtectedRoute>
+                  <Reviews />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create-ad"
+              element={
+                <ProtectedRoute>
+                  <CreateAd />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <Chat />
+                </ProtectedRoute>
+              }
+            />
 
-              {/* Admin Routes */}
-              {/* <Route
+            {/* Admin Routes */}
+            {/* <Route
                 path="/admin/*"
                 element={
                   <AdminRoute>
@@ -186,19 +188,19 @@ function AppContent() {
                 }
                    
               /> */}
-              <Route
-                path="/admin/*"
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                }
-              />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </Router>
+            <Route
+              path="/admin/*"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+          </Routes>
+        </main>
+        {/* <Footer /> */}
+      </div>
+    </Router>
   );
 }
 
